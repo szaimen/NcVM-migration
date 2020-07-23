@@ -23,5 +23,5 @@ That's it!
 - Non-standard customization on the old NcVM will not get backed up and restored, and has to get manually redone on the new NcVM after restoring.
 - The crontabs are saved in a no-restore folder. They are backed up here, so that you can look at them to better remember which cronjobs where running in your old system. You need to manually restore missing cronjobs, since that can't be automated.
 - The update.sh file is backed up in this folder, as well, since you could possibly have changed something in there, which has to get manually restored, if needed.
-- The fstab is also getting backed up in the no-restore folder so that you can see your old configuration, which is helpful e.g. to restore the correct order of smb-mounts, etc.
+- The fstab is also getting backed up in the no-restore folder so that you can see your old configuration, which is helpful e.g. to be able to manually restore the correct order of smb-mounts, etc.
 - Backup of bitwarden data is not supported.
