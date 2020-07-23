@@ -17,10 +17,10 @@ That's it!
 ## Limitations
 - The migration.sh script only works on NcVM based machines with Ubuntu 18.04 and php 7.2 and the restore.sh script only works on NcVM based machines with Ubuntu 20.04 and php 7.4.
 - Only the default NcVM configuration is supported.
-- At least Nextcloud 18 is needed to run the script
+- At least Nextcloud 18 is needed to run the migration.sh script
 - You have to connect an SMB-mount by executing the by the NcVM provided smbmount script before running both - migration.sh & restore.sh - scripts since you need to store the backup files outside of the VM to be able to restore them to a new VM afterwards.
 - Apps, that are provided by the VM and were installed on your old system will not be automatically installed by the restore.sh script, since they can get easily reinstalled by running the by the NcVM provided scripts.
+- Non-standard customization on the old NcVM will not get backed up and restored, and has to get manually redone on the new NcVM after restoring.
 - The crontabs are saved in a no-restore folder. They are backed up here, so that you can look at them to better remember which cronjobs where running in your old system. You need to manually restore missing cronjobs, since that can't be automated.
 - The update.sh file is backed up in this folder, as well, since you could possibly have changed something in there, which has to get manually restored, if needed.
 - Backup of bitwarden data is not supported.
-- Non-standard customization on the old NcVM will not get backed up and restored, and has to get manually redone on the new NcVM after restoring.
