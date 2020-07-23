@@ -35,8 +35,8 @@ That's it!
 - Only the default NcVM configuration is supported.
 - At least Nextcloud 18 is needed to run the migration.sh script
 - Apps, that are provided by the NcVM and were installed on your old system will not be automatically installed by the restore.sh script, since they can get easily reinstalled by running the by the NcVM provided scripts.
+- Backup of bitwarden data is not supported.
 - Non-standard customization on the old NcVM will not get backed up and restored, and has to get manually redone on the new NcVM after restoring.
 - The crontabs are saved in a no-restore folder. They are backed up here, so that you can look at them to better remember which cronjobs where running in your old system. You need to manually restore missing cronjobs, since that can't be automated.
 - The update.sh file is backed up in this folder, as well, since you could possibly have changed something in there, which has to get manually restored, if needed.
 - The fstab is also getting backed up in the no-restore folder so that you can see your old configuration, which is helpful e.g. to be able to manually restore the correct order of smb-mounts, etc.
-- Backup of bitwarden data is not supported.
