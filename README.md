@@ -22,7 +22,7 @@ That's it!
 5. import and start the new NcVM and run the startup-script **without** activating lets encrypt and tls.
 6. mount the same SMB-share to the new NcVM using the built-in smbmount script again (see point 2)
 7. execute the by the migration.sh script produced restore.sh script
-8. test if everything works as expected (e.g. check the Nextcloud logs, test all installed Nextcloud apps, etc.)
+8. logg into the new restored NcVM and test if everything works as expected (e.g. check the Nextcloud logs, test all installed Nextcloud apps, etc.)
 9. if yes, enable lets encrypt by running `sudo bash /var/scripts/activate-tls.sh`
 10. manually restore crontab entries, fstab entries, etc. if needed
 11. reinstall NcVM apps by running `sudo bash /var/scripts/menu.sh` -> Additional Apps
