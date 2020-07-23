@@ -1,11 +1,11 @@
-# NcVM-migration.sh
+# NcVM-migration
 A shell script for migrating the [NcVM](https://github.com/nextcloud/vm) between different Ubuntu Versions.
 
 **Please note:** You are free to run this script at your personal risk. I am not responsible for any damaged systems and will not provide any personal support. So please keep backups!
 
 ## How to run?
 Connect to your NcVM via ssh and run:
-`wget https://raw.githubusercontent.com/szaimen/NcVM-migration.sh/master/migration.sh && sudo bash migration.sh`
+`wget https://raw.githubusercontent.com/szaimen/NcVM-migration/master/migration.sh && sudo bash migration.sh`
 That's it!
 
 ## How does it work?
