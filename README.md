@@ -14,6 +14,20 @@ That's it!
 - In the last step of the restore.sh script, are you asked if you want to activate tls on the new server, which is the only step left, to make the new server work again.
 - After that, you can simply execute the by the NcVM provided scripts again, to get additional apps working again.
 
+## In a nutshell
+1. Create a backup of your NcVM
+2. mount a SMB-share to your NcVM using the built-in [smbmount](https://github.com/nextcloud/vm/blob/master/apps/smbmount.sh) script
+3. [execute](https://github.com/szaimen/NcVM-migration.sh#how-to-run) the migration.sh script
+4. [download](https://www.hanssonit.se/nextcloud-vm/) a new NcVM
+5. import and start the new NcVM and run the startup-script without activating lets encrypt and tls.
+6. mount the same SMB-Share to the new NcVM using the built-in [smbmount](https://github.com/nextcloud/vm/blob/master/apps/smbmount.sh) script
+7. execute the by the migration.sh script produced restore.sh script
+8. test if everything works as expected (e.g. check the nextcloud logs, test all installed apps, etc.)
+9. if yes, enable lets encrypt by running `sudo bash /var/scripts/activate-tls.sh`
+10. manually restore crontab entries, fstab entries, etc. if needed
+11. reinstall NcVM apps
+12. This should be it 🎉
+
 ## Limitations
 - You have to connect an SMB-mount by executing the by the NcVM provided smbmount script before running both - migration.sh & restore.sh - scripts since you need to store the backup files outside of the NcVM to be able to restore them to a new NcVM afterwards.
 - The migration.sh script only works on NcVM based machines with Ubuntu 18.04 and php 7.2 and the restore.sh script only works on NcVM based machines with Ubuntu 20.04 and php 7.4.
