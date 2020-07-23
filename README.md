@@ -30,6 +30,7 @@ That's it!
 
 ## Limitations
 - You have to connect an SMB-mount by executing the by the NcVM provided smbmount script before running both - migration.sh & restore.sh - scripts since you need to store the backup files outside of the NcVM to be able to restore them to a new NcVM afterwards.
+- If you have mounted and used SMB-mounts in the NcVM before, you need to restore them manually in the correct order at the correct mountpoint before executing the restore.sh scipt
 - The migration.sh script only works on NcVM based machines with Ubuntu 18.04 and php 7.2 and the restore.sh script only works on NcVM based machines with Ubuntu 20.04 and php 7.4.
 - Only the default NcVM configuration is supported.
 - At least Nextcloud 18 is needed to run the migration.sh script
