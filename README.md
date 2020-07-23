@@ -10,7 +10,7 @@ That's it!
 
 ## How does it work?
 - The whole backup-restore functionality is based on the great scripts provided by DecaTec, please see here: https://codeberg.org/DecaTec/Nextcloud-Backup-Restore
-- The migration script produces automatically a restore.sh script, which can be called from the new NcVM after running the startup-scrip and restores all Nextcloud-relevant files and data, which is the database, the datadirectory and the Nextcloud-folder to the new VM.
+- The migration script produces automatically the backup files and a restore.sh script, which can be called from the new NcVM after running the startup-scrip and restores all Nextcloud-relevant files and data, which is the database, the datadirectory and the Nextcloud-folder to the new VM.
 - In the last step of the restore.sh script, are you asked if you want to activate tls on the new server, which is the only step left, to make the new server work again.
 - After that, you can simply execute the by the NcVM provided scripts again, to get additional apps working again.
 
