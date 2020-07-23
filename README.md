@@ -1,5 +1,5 @@
 # NcVM-migration.sh
-A shell script for migrating NcVM between different Ubuntu Versions.
+A shell script for migrating the NcVM between different Ubuntu Versions.
 
 **Please note:** I am not responsible for any damaged systems and will not provide any personal support. So please keep backups!
 
