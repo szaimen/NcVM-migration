@@ -24,7 +24,7 @@ That's it!
 7. Execute the by the migration.sh script produced restore.sh script on the new NcVM
 8. Logg in to the restored Nextcloud using the local ipaddress of the new NcVM in a Browser and test if everything works as expected<br/>(e.g. check the Nextcloud logs, test all installed Nextcloud apps, etc.)
 9. If yes, enable lets encrypt by running `sudo bash /var/scripts/activate-tls.sh`
-10. Manually restore crontab entries, fstab entries, etc. if needed
+10. If needed, manually restore crontab entries, fstab entries, etc.
 11. Reinstall NcVM apps by running `sudo bash /var/scripts/menu.sh` -> `Additional Apps`
 12. This should be it 🎉
 
