@@ -150,7 +150,7 @@ if ! installed php7.2-fpm || installed php7.3-fpm || installed php7.4-fpm; then
 fi
 
 # Backup of Bitwarden is not supported.
-if [ -d "/root/bwdata/" ]; then
+if [ -d "/root/bwdata/" ] || [ -d "/home/bitwarden/bwdata/" ]; then
     message "It seems like Bitwarden is or was installed.\nBackup of Bitwarden is not supported."
     exit 1  
 fi
