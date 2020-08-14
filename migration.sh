@@ -68,6 +68,9 @@ user_question() {
     done
 }
 
+# Variables
+BITWARDEN_PATH="/home/bitwarden/bwdata"
+
 # check if whiptail is installed
 if ! installed whiptail; then
     echo "It seems like whiptail is not installed. This is not supported."
@@ -149,10 +152,15 @@ if ! installed php7.2-fpm || installed php7.3-fpm || installed php7.4-fpm; then
     exit 1
 fi
 
-# Backup of Bitwarden is not supported.
-if [ -d "/root/bwdata/" ] || [ -d "/home/bitwarden/bwdata/" ]; then
-    message "It seems like Bitwarden is or was installed.\nBackup of Bitwarden is not supported."
+# Backup of Bitwarden in the old place is not supported.
+if [ -d "/root/bwdata/" ] ; then
+    message "It seems like Bitwarden is or was installed in the old place.\This is not supported."
     exit 1  
+fi
+
+
+if [ -d "$BITWARDEN_PATH" ] ; then
+    BITWARDEN="yes"
 fi
 
 # Get smb-mountpoint
@@ -221,6 +229,7 @@ redisPassword=$(occ config:system:get redis password)
 
 fileNameBackupFileDir='nextcloud-filedir.tar.gz'
 fileNameBackupDataDir='nextcloud-datadir.tar.gz'
+fileNameBitwarden='bitwarden.tar.gz'
 
 fileNameBackupDb='nextcloud-db.sql'
 
@@ -278,6 +287,19 @@ echo "Backup Nextcloud database (PostgreSQL)..."
 PGPASSWORD="${dbPassword}" pg_dump "${nextcloudDatabase}" -h localhost -U "${dbUser}" -f "${backupdir}/${fileNameBackupDb}"
 echo "Done"
 
+# Backup Bitwarden in new place
+if [ "$BITWARDEN" = "yes" ]; then
+    echo "Backing up bitwarden"
+    tar -cpzf "${backupdir}/${fileNameBitwarden}" -C "$BITWARDEN_PATH" .
+    BITWARDEN_DOMAIN="$(grep ^url "$BITWARDEN_PATH"/config.yml)"
+    BITWARDEN_DOMAIN=${BITWARDEN_DOMAIN##*url: https://}
+    BITWARDEN_ID="$(grep "^globalSettings__installation__id=" "$BITWARDEN_PATH"/env/global.override.env)"
+    BITWARDEN_ID=${BITWARDEN_ID##*globalSettings__installation__id=}
+    BITWARDEN_KEY="$(grep "^globalSettings__installation__key" "$BITWARDEN_PATH"/env/global.override.env)"
+    BITWARDEN_KEY=${BITWARDEN_KEY##*globalSettings__installation__key=}
+    echo "Done"
+fi
+
 # Backing up update.sh to have the data if it was modified
 echo "Backing up update.sh..."
 mkdir -p "$backupdir/no-restore"
@@ -304,6 +326,7 @@ echo "Done"
 occ maintenance:mode --off
 
 #-----------------------------------------------creating restore.sh-file--------------------------------------------------
+
 cat > ${backupdir}/restore.sh <<- EOF
 #!/bin/bash
 
@@ -644,6 +667,124 @@ message "The Backup was successfully restored.\nThe time has come to logg in to 
 bash /var/scripts/activate-tls.sh
 
 EOF
+
+#-----------------------------------------------creating bitwarden-restore.sh-file--------------------------------------------------
+
+if [ "$BITWARDEN" = "yes" ]; then
+    cat > ${backupdir}/bitwarden-restore.sh <<- EOF
+#!/bin/bash
+
+# Copyright (c) 2020 Simon Lindner (https://github.com/szaimen)
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+# Variables
+SCRIPT_DIR=\$(dirname \$BASH_SOURCE)
+BITWARDEN_PATH="$BITWARDEN_PATH"
+
+# Functions
+message() {
+    whiptail --msgbox "\$1" "" ""
+}
+user_question() {
+    while true; do 
+        read -p "\$1 ([y]es or [n]o): " ANSWER
+        if [ "\$ANSWER" = no ] || [ "\$ANSWER" = n ]; then
+            echo "no" && break
+        elif [ "\$ANSWER" = yes ] || [ "\$ANSWER" = y ]; then
+            echo "yes" && break
+        fi
+    done
+}
+
+# install whiptail if not already installed
+if ! installed whiptail; then
+    echo "It seems like whiptail is not installed. This is not supported."
+    exit 1
+fi
+
+# Rootcheck
+if [ "\$EUID" -ne 0 ]; then
+    message "You are not root. Please run 'sudo bash restore.sh'"
+    exit 1
+fi
+
+message "Before you continue, please make sure, that you have Bitwarden installed on the new NcVM by executing:
+'sudo bash /var/scripts/menu.sh' and choose Additional Apps -> Bitwarden
+
+The following is a guide for installing Bitwarden on the new NcVM before restoring your data with this script:
+1. Please enter as Bitwarden-Domain the same Domain that you have used for Bitwarden by now, which is: $BITWARDEN_DOMAIN
+2. Answer 'no' to the question if you want to use Lets Encrypt
+2. Enter your installation id, which is: $BITWARDEN_ID
+3. And your installation key, which is: $BITWARDEN_KEY
+4. Answer 'no' to all question, that are related to SSL
+
+After doing this you can continue with executing this script, which will restore all your data to the new NcVM."
+
+if [ \$(user_question "Have you already installed Bitwarden?") = "no" ]; then
+    echo "exiting" && exit 1
+fi
+
+# Check if restore.tar.gz is present
+if [ ! -f "\$SCRIPT_DIR/${fileNameBitwarden}" ]; then
+    message "Something got wrong. The Bitwarden Backup file is not present."
+    exit 1
+fi
+
+if [ ! -d "\$BITWARDEN_PATH" ]; then
+    message "Bitwarden isn't installed. Please first install Bitwarden based on the scripts guidance."
+    exit 1
+fi
+
+TEMP_DOMAIN="\$(grep ^url "\$BITWARDEN_PATH"/config.yml)"
+TEMP_DOMAIN=\${TEMP_DOMAIN##*url: https://}
+if [ "\$TEMP_DOMAIN" != "$BITWARDEN_DOMAIN" ]; then
+    message "You didn't enter the same Domain as your old bitwarden Domain. Please reinstall Bitwarden completely."
+    exit 1
+fi
+
+# Stop Bitwarden service
+echo "Stopping Bitwarden..."
+systemctl stop bitwarden
+echo "Done"
+
+# Remove all old files in the Bitwarden directory and creating a new folder
+echo "Removing all old files in the Bitwarden directory and creating a new folder..."
+rm -rf "\${BITWARDEN_PATH:?}"
+mkdir -p "\$BITWARDEN_PATH"
+echo "Done"
+
+# Restore files to bitwarden
+echo "Restoring files to the bitwarden directory..."
+tar -xzf "\$SCRIPT_DIR/${fileNameBitwarden}" -C "\${BITWARDEN_PATH}"
+echo "Done"
+
+# Start Bitwarden
+echo "Starting Bitwarden..."
+systemctl start bitwarden
+echo "Done"
+
+message "Congratulation! Your Bitwarden installation should be restore by now. Please visit $BITWARDEN_DOMAIN to check if everything is okay."
+exit
+EOF
+fi
+
 #--------------------------------------------------------------------------------------------------------------------
 
 # Check if db-backup was created
@@ -663,6 +804,23 @@ fi
 # Check if nextclouddir-file was created
 if [ ! -f "${backupdir}/${fileNameBackupFileDir}" ]; then
     message "Something got wrong. The nextclouddir-file was not created."
+    exit 1
+fi
+
+# Check if restore.sh was created
+if [ ! -f "${backupdir}/restore.sh" ]; then
+    message "Something got wrong. Restore script was not created."
+    exit 1
+fi
+
+# Check if bitwarden script and restore file are present
+if [ "$BITWARDEN" = "yes" ]; then
+    if [ ! -f "${backupdir}/${fileNameBitwarden}" ]; then
+        message "Something got wrong. The Bitwarden Backup file is not present."
+    fi
+    if [ ! -f "${backupdir}/bitwarden-restore.sh" ]; then
+        message "Something got wrong. The Bitwarden restore Script is not present."
+    fi
     exit 1
 fi
 
