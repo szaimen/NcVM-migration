@@ -47,7 +47,6 @@ That's it!
 
 ### Bitwarden-restore in a nutshell
 1. Execute all steps of [In a nutshell](#in-a-nutshell)
-2. Install Bitwarden on the new NcVM by running 'sudo bash /var/scripts/menu.sh' and choosing Additional Apps -> Bitwarden
-3. Enter during the installation the Bitwarden-Domain, Installation-ID and Installation-key of your old Bitwarden installation
-4. Execute bitwarden-restore.sh
-5. That's it 🎉
+2. Install Bitwarden on the new NcVM by running 'sudo bash /var/scripts/menu.sh' and choosing Additional Apps -> Bitwarden and enter during the installation the Bitwarden-Domain, Installation-ID and Installation-key of your old Bitwarden installation
+3. Execute bitwarden-restore.sh
+4. That's it 🎉
