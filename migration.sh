@@ -70,6 +70,7 @@ user_question() {
 
 # Variables
 BITWARDEN_PATH="/home/bitwarden/bwdata"
+BITWARDEN_VOLUME="/var/lib/docker/volumes/docker_mssql_data"
 
 # check if whiptail is installed
 if ! installed whiptail; then
@@ -158,8 +159,11 @@ if [ -d "/root/bwdata/" ] ; then
     exit 1  
 fi
 
-
-if [ -d "$BITWARDEN_PATH" ] ; then
+if [ -d "$BITWARDEN_PATH" ]; then
+    if [ ! -d "$BITWARDEN_VOLUME" ]; then
+        message "No Bitwarden Volume available. This is not supported."
+        exit 1
+    fi
     BITWARDEN="yes"
 fi
 
@@ -230,6 +234,7 @@ redisPassword=$(occ config:system:get redis password)
 fileNameBackupFileDir='nextcloud-filedir.tar.gz'
 fileNameBackupDataDir='nextcloud-datadir.tar.gz'
 fileNameBitwarden='bitwarden.tar.gz'
+fileNameBitwardenVolume='bitwarden-volume.tar.gz'
 
 fileNameBackupDb='nextcloud-db.sql'
 
@@ -290,6 +295,7 @@ echo "Done"
 # Backup Bitwarden in new place
 if [ "$BITWARDEN" = "yes" ]; then
     echo "Backing up bitwarden"
+    systemctl stop bitwarden
     tar -cpzf "${backupdir}/${fileNameBitwarden}" -C "$BITWARDEN_PATH" .
     BITWARDEN_DOMAIN="$(grep ^url "$BITWARDEN_PATH"/config.yml)"
     BITWARDEN_DOMAIN=${BITWARDEN_DOMAIN##*url: https://}
@@ -297,6 +303,8 @@ if [ "$BITWARDEN" = "yes" ]; then
     BITWARDEN_ID=${BITWARDEN_ID##*globalSettings__installation__id=}
     BITWARDEN_KEY="$(grep "^globalSettings__installation__key" "$BITWARDEN_PATH"/env/global.override.env)"
     BITWARDEN_KEY=${BITWARDEN_KEY##*globalSettings__installation__key=}
+    tar -cpzf "${backupdir}/${fileNameBitwardenVolume}" -C "$BITWARDEN_VOLUME" .
+    systemctl start bitwarden
     echo "Done"
 fi
 
@@ -697,6 +705,9 @@ if [ "$BITWARDEN" = "yes" ]; then
 # Variables
 SCRIPT_DIR=\$(dirname \$BASH_SOURCE)
 BITWARDEN_PATH="$BITWARDEN_PATH"
+BITWARDEN_VOLUME="$BITWARDEN_VOLUME"
+fileNameBitwarden="$fileNameBitwarden"
+fileNameBitwardenVolume="$fileNameBitwardenVolume"
 
 # Functions
 message() {
@@ -711,6 +722,13 @@ user_question() {
             echo "yes" && break
         fi
     done
+}
+installed() {
+    if dpkg -s "\$1" | grep -q "^Status: install ok installed$"; then
+        return 0
+    else
+        return 1
+    fi
 }
 
 # install whiptail if not already installed
@@ -741,9 +759,15 @@ if [ \$(user_question "Have you already installed Bitwarden?") = "no" ]; then
     echo "exiting" && exit 1
 fi
 
-# Check if restore.tar.gz is present
-if [ ! -f "\$SCRIPT_DIR/${fileNameBitwarden}" ]; then
+# Check if bitwarden-restore.tar.gz is present
+if [ ! -f "\$SCRIPT_DIR/\${fileNameBitwarden}" ]; then
     message "Something got wrong. The Bitwarden Backup file is not present."
+    exit 1
+fi
+
+# Check if bitwarden-volume.tar.gz is present
+if [ ! -f "\$SCRIPT_DIR/\${fileNameBitwardenVolume}" ]; then
+    message "Something got wrong. The Bitwarden Volume Backup file is not present."
     exit 1
 fi
 
@@ -770,9 +794,20 @@ rm -rf "\${BITWARDEN_PATH:?}"
 mkdir -p "\$BITWARDEN_PATH"
 echo "Done"
 
+# Remove all old files in the Bitwarden Volume and creating a new folder
+echo "Removing all old files in the Bitwarden Volume and creating a new folder..."
+rm -rf "\${BITWARDEN_VOLUME:?}"
+mkdir -p "\$BITWARDEN_VOLUME"
+echo "Done"
+
 # Restore files to bitwarden
 echo "Restoring files to the bitwarden directory..."
-tar -xzf "\$SCRIPT_DIR/${fileNameBitwarden}" -C "\${BITWARDEN_PATH}"
+tar -xzf "\$SCRIPT_DIR/\${fileNameBitwarden}" -C "\${BITWARDEN_PATH}"
+echo "Done"
+
+# Restore Bitwarden Volume
+echo "Restoring Bitwarden Volume..."
+tar -xzf "\$SCRIPT_DIR/\${fileNameBitwardenVolume}" -C "\${BITWARDEN_VOLUME}"
 echo "Done"
 
 # Start Bitwarden
@@ -817,11 +852,16 @@ fi
 if [ "$BITWARDEN" = "yes" ]; then
     if [ ! -f "${backupdir}/${fileNameBitwarden}" ]; then
         message "Something got wrong. The Bitwarden Backup file is not present."
+        exit 1
     fi
     if [ ! -f "${backupdir}/bitwarden-restore.sh" ]; then
         message "Something got wrong. The Bitwarden restore Script is not present."
+        exit 1
     fi
-    exit 1
+    if [ ! -f "${backupdir}/${fileNameBitwardenVolume}" ]; then
+        message "Something got wrong. The Bitwarden Volume Backup file is not present."
+        exit 1
+    fi
 fi
 
 message "The Backup was successfully created here: ${backupdir}."
