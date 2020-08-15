@@ -776,6 +776,11 @@ if [ ! -d "\$BITWARDEN_PATH" ]; then
     exit 1
 fi
 
+if [ ! -d "\$BITWARDEN_VOLUME" ]; then
+    message "Somehow is the Bitwarden Volume not present. Please report this as an issue to the Github repository."
+    exit 1
+fi
+
 TEMP_DOMAIN="\$(grep ^url "\$BITWARDEN_PATH"/config.yml)"
 TEMP_DOMAIN=\${TEMP_DOMAIN##*url: https://}
 if [ "\$TEMP_DOMAIN" != "$BITWARDEN_DOMAIN" ]; then
