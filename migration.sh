@@ -651,7 +651,7 @@ echo "Done"
 
 # Appending the new local IP-address to trusted Domains
 echo "appending the new Ip-Address to trusted Domains"
-IP_ADDR=\$(hostname -I)
+IP_ADDR=\$(hostname -I | awk '{print $1}')
 i=0
 while [ "\$i" -le 10 ]; do
     if [ "\$(occ config:system:get trusted_domains "\$i")" = "" ]; then
