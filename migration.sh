@@ -159,6 +159,10 @@ if [ -d "/root/bwdata/" ] || [ -d "/home/bitwarden/bwdata/" ]; then
 fi
 
 if [ -d "$BITWARDEN_PATH" ]; then
+    if [ ! -f "$BITWARDEN_PATH"/config.json ]; then
+        message "It seems like there is no config.json file for Bitwarden_rs.\This is not supported."
+        exit 1  
+    fi
     BITWARDEN="yes"
 fi
 
@@ -736,7 +740,7 @@ While doing this, enter as Bitwarden_rs-Domain the same Domain that you have use
 
 After doing this you can continue with executing this script, which will restore all your data to the new NcVM."
 
-if [ \$(user_question "Have you already installed Bitwarden?") = "no" ]; then
+if [ \$(user_question "Have you already installed Bitwarden_rs?") = "no" ]; then
     echo "exiting" && exit 1
 fi
 
