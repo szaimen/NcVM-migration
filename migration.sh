@@ -69,8 +69,7 @@ user_question() {
 }
 
 # Variables
-BITWARDEN_PATH="/home/bitwarden/bwdata"
-BITWARDEN_VOLUME="/var/lib/docker/volumes/docker_mssql_data"
+BITWARDEN_PATH="/home/bitwarden_rs"
 
 # check if whiptail is installed
 if ! installed whiptail; then
@@ -154,16 +153,12 @@ if ! installed php7.2-fpm || installed php7.3-fpm || installed php7.4-fpm; then
 fi
 
 # Backup of Bitwarden in the old place is not supported.
-if [ -d "/root/bwdata/" ] ; then
-    message "It seems like Bitwarden is or was installed in the old place.\This is not supported."
+if [ -d "/root/bwdata/" ] || [ -d "/home/bitwarden/bwdata/" ]; then
+    message "It seems like the official Bitwarden is or was installed.\This is not supported."
     exit 1  
 fi
 
 if [ -d "$BITWARDEN_PATH" ]; then
-    if [ ! -d "$BITWARDEN_VOLUME" ]; then
-        message "No Bitwarden Volume available. This is not supported."
-        exit 1
-    fi
     BITWARDEN="yes"
 fi
 
@@ -234,7 +229,6 @@ redisPassword=$(occ config:system:get redis password)
 fileNameBackupFileDir='nextcloud-filedir.tar.gz'
 fileNameBackupDataDir='nextcloud-datadir.tar.gz'
 fileNameBitwarden='bitwarden.tar.gz'
-fileNameBitwardenVolume='bitwarden-volume.tar.gz'
 
 fileNameBackupDb='nextcloud-db.sql'
 
@@ -294,17 +288,10 @@ echo "Done"
 
 # Backup Bitwarden in new place
 if [ "$BITWARDEN" = "yes" ]; then
-    echo "Backing up bitwarden"
-    systemctl stop bitwarden
-    tar -cpzf "${backupdir}/${fileNameBitwarden}" -C "$BITWARDEN_PATH" .
-    BITWARDEN_DOMAIN="$(grep ^url "$BITWARDEN_PATH"/config.yml)"
-    BITWARDEN_DOMAIN=${BITWARDEN_DOMAIN##*url: https://}
-    BITWARDEN_ID="$(grep "^globalSettings__installation__id=" "$BITWARDEN_PATH"/env/global.override.env)"
-    BITWARDEN_ID=${BITWARDEN_ID##*globalSettings__installation__id=}
-    BITWARDEN_KEY="$(grep "^globalSettings__installation__key" "$BITWARDEN_PATH"/env/global.override.env)"
-    BITWARDEN_KEY=${BITWARDEN_KEY##*globalSettings__installation__key=}
-    tar -cpzf "${backupdir}/${fileNameBitwardenVolume}" -C "$BITWARDEN_VOLUME" .
-    systemctl start bitwarden
+    echo "Backing up Bitwarden_rs"
+    docker stop bitwarden_rs
+    tar -cpzf "${backupdir}/${fileNameBitwarden}" --exclude="./bitwarden.log" -C "$BITWARDEN_PATH" .
+    docker start bitwarden_rs
     echo "Done"
 fi
 
@@ -705,9 +692,7 @@ if [ "$BITWARDEN" = "yes" ]; then
 # Variables
 SCRIPT_DIR=\$(dirname \$BASH_SOURCE)
 BITWARDEN_PATH="$BITWARDEN_PATH"
-BITWARDEN_VOLUME="$BITWARDEN_VOLUME"
 fileNameBitwarden="$fileNameBitwarden"
-fileNameBitwardenVolume="$fileNameBitwardenVolume"
 
 # Functions
 message() {
@@ -743,15 +728,11 @@ if [ "\$EUID" -ne 0 ]; then
     exit 1
 fi
 
-message "Before you continue, please make sure, that you have Bitwarden installed on the new NcVM by executing:
-'sudo bash /var/scripts/menu.sh' and choose Additional Apps -> Bitwarden
+message "Before you continue, please make sure, that you have Bitwarden_rs installed on the new NcVM by executing:
+'sudo bash /var/scripts/menu.sh' and choose Additional Apps -> Bitwarden -> Bitwarden_rs
 
-The following is a guide for installing Bitwarden on the new NcVM before restoring your data with this script:
-1. Please enter as Bitwarden-Domain the same Domain that you have used for Bitwarden by now, which is: $BITWARDEN_DOMAIN
-2. Answer 'no' to the question if you want to use Lets Encrypt
-2. Enter your installation id, which is: $BITWARDEN_ID
-3. And your installation key, which is: $BITWARDEN_KEY
-4. Answer 'no' to all question, that are related to SSL
+Please install Bitwarden_rs on the new NcVM before restoring your data with this script.
+While doing this, enter as Bitwarden_rs-Domain the same Domain that you have used for Bitwarden_rs by now.
 
 After doing this you can continue with executing this script, which will restore all your data to the new NcVM."
 
@@ -761,48 +742,24 @@ fi
 
 # Check if bitwarden-restore.tar.gz is present
 if [ ! -f "\$SCRIPT_DIR/\${fileNameBitwarden}" ]; then
-    message "Something got wrong. The Bitwarden Backup file is not present."
-    exit 1
-fi
-
-# Check if bitwarden-volume.tar.gz is present
-if [ ! -f "\$SCRIPT_DIR/\${fileNameBitwardenVolume}" ]; then
-    message "Something got wrong. The Bitwarden Volume Backup file is not present."
+    message "Something got wrong. The Bitwarden_rs Backup file is not present."
     exit 1
 fi
 
 if [ ! -d "\$BITWARDEN_PATH" ]; then
-    message "Bitwarden isn't installed. Please first install Bitwarden based on the scripts guidance."
+    message "Bitwarden_rs isn't installed. Please first install Bitwarden_rs based on the scripts guidance."
     exit 1
 fi
 
-if [ ! -d "\$BITWARDEN_VOLUME" ]; then
-    message "Somehow is the Bitwarden Volume not present. Please report this as an issue to the Github repository."
-    exit 1
-fi
-
-TEMP_DOMAIN="\$(grep ^url "\$BITWARDEN_PATH"/config.yml)"
-TEMP_DOMAIN=\${TEMP_DOMAIN##*url: https://}
-if [ "\$TEMP_DOMAIN" != "$BITWARDEN_DOMAIN" ]; then
-    message "You didn't enter the same Domain as your old bitwarden Domain. Please reinstall Bitwarden completely."
-    exit 1
-fi
-
-# Stop Bitwarden service
-echo "Stopping Bitwarden..."
-systemctl stop bitwarden
+# Stop Bitwarden_rs service
+echo "Stopping Bitwarden_rs..."
+docker stop bitwarden_rs
 echo "Done"
 
-# Remove all old files in the Bitwarden directory and creating a new folder
-echo "Removing all old files in the Bitwarden directory and creating a new folder..."
+# Remove all old files in the Bitwarden_rs directory and creating a new folder
+echo "Removing all old files in the Bitwarden_rs directory and creating a new folder..."
 rm -rf "\${BITWARDEN_PATH:?}"
 mkdir -p "\$BITWARDEN_PATH"
-echo "Done"
-
-# Remove all old files in the Bitwarden Volume and creating a new folder
-echo "Removing all old files in the Bitwarden Volume and creating a new folder..."
-rm -rf "\${BITWARDEN_VOLUME:?}"
-mkdir -p "\$BITWARDEN_VOLUME"
 echo "Done"
 
 # Restore files to bitwarden
@@ -810,17 +767,12 @@ echo "Restoring files to the bitwarden directory..."
 tar -xzf "\$SCRIPT_DIR/\${fileNameBitwarden}" -C "\${BITWARDEN_PATH}"
 echo "Done"
 
-# Restore Bitwarden Volume
-echo "Restoring Bitwarden Volume..."
-tar -xzf "\$SCRIPT_DIR/\${fileNameBitwardenVolume}" -C "\${BITWARDEN_VOLUME}"
+# Start Bitwarden_rs
+echo "Starting Bitwarden_rs..."
+docker start bitwarden_rs
 echo "Done"
 
-# Start Bitwarden
-echo "Starting Bitwarden..."
-systemctl start bitwarden
-echo "Done"
-
-message "Congratulation! Your Bitwarden installation should be restore by now. Please visit $BITWARDEN_DOMAIN to check if everything is okay."
+message "Congratulation! Your Bitwarden_rs installation should be restore by now. Please visit your Bitwarden_rs-Domain to check if everything is okay."
 exit
 EOF
 fi
@@ -856,15 +808,11 @@ fi
 # Check if bitwarden script and restore file are present
 if [ "$BITWARDEN" = "yes" ]; then
     if [ ! -f "${backupdir}/${fileNameBitwarden}" ]; then
-        message "Something got wrong. The Bitwarden Backup file is not present."
+        message "Something got wrong. The Bitwarden_rs Backup file is not present."
         exit 1
     fi
     if [ ! -f "${backupdir}/bitwarden-restore.sh" ]; then
-        message "Something got wrong. The Bitwarden restore Script is not present."
-        exit 1
-    fi
-    if [ ! -f "${backupdir}/${fileNameBitwardenVolume}" ]; then
-        message "Something got wrong. The Bitwarden Volume Backup file is not present."
+        message "Something got wrong. The Bitwarden_rs restore Script is not present."
         exit 1
     fi
 fi
