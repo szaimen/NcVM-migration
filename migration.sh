@@ -640,6 +640,9 @@ echo "Repairing the Database, if it got corupted"
 occ maintenance:repair 
 echo "Done"
 
+# Flush redis
+redis-cli -s /var/run/redis/redis-server.sock -c FLUSHALL
+
 # Appending the new local IP-address to trusted Domains
 echo "appending the new Ip-Address to trusted Domains"
 IP_ADDR=\$(hostname -I | awk '{print $1}' | sed 's/ //')
