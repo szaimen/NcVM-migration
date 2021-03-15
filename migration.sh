@@ -615,6 +615,7 @@ echo "Done"
 
 # Restore old redis password
 sed -i "s/^requirepass.*/requirepass \$redisPassword/g" /etc/redis/redis.conf
+systemctl restart redis
 
 # Start web server
 echo "Starting web server..."
