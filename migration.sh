@@ -580,6 +580,7 @@ if [ "\$nextcloudDataDir" != "no" ]; then
     echo "Deleting old Nextcloud data directory..."
     set +e
     rm -r "\${nextcloudDataDir}" &>/dev/null
+    mkdir -p "\${nextcloudDataDir}" &>/dev/null
     set -e
     echo "Done"
 fi
