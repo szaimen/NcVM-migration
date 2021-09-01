@@ -111,10 +111,10 @@ if [ "$(lsb_release -is)" != "Ubuntu" ]; then
 fi
 
 # Check OS_Codename
-if [ "$(lsb_release -cs)" != "bionic" ]; then
-    message "This script is only meant to run on Ubuntu version 18.04.\nThis is not supported"
-    exit 1
-fi
+#if [ "$(lsb_release -cs)" != "bionic" ]; then
+#    message "This script is only meant to run on Ubuntu version 18.04.\nThis is not supported"
+#    exit 1
+#fi
 
 # Check if datadirectory is mnt-ncdata
 if [ "$(occ config:system:get datadirectory)" != "/mnt/ncdata" ]; then   
@@ -147,10 +147,10 @@ if ! installed apache2; then
 fi
 
 # Check if php7.2 is installed
-if ! installed php7.2-fpm || installed php7.3-fpm || installed php7.4-fpm; then
-    message "It seems like php7.2 is not installed or any other php version is additionally installed.\nThis is not supported."
-    exit 1
-fi
+#if ! installed php7.2-fpm || installed php7.3-fpm || installed php7.4-fpm; then
+#    message "It seems like php7.2 is not installed or any other php version is additionally installed.\nThis is not supported."
+#    exit 1
+#fi
 
 # Backup of Bitwarden in the old place is not supported.
 if [ -d "/root/bwdata/" ] || [ -d "/home/bitwarden/bwdata/" ]; then
