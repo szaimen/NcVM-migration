@@ -421,12 +421,6 @@ if [ ! -f "/var/www/nextcloud/occ" ]; then
     exit 1
 fi
 
-# Check if activate-tls exists
-if [ ! -f /var/scripts/activate-tls.sh ]; then
-    message "It seems like you have already run the activate-tls.sh script.\nThis is not supported. Please start all over again with a new NcVM."
-    exit 1
-fi
-
 # Check webserveruser
 WEBUNAME=\$(ls -l /var/www/nextcloud/occ | awk '{print \$4}')
 if [ "\$WEBUNAME" != "www-data" ]; then 
@@ -668,7 +662,7 @@ fi
 message "The Backup was successfully restored.\nThe time has come to logg in to your Nextcloud in a Browser using the ipaddress \$IP_ADDR to check if Nextcloud works as expected.\n(e.g. check the Nextcloud logs and try out all installed apps)\nIf yes, just press [ENTER]."
 
 # Install Let's Encrypt
-bash /var/scripts/activate-tls.sh
+curl -fsSL https://raw.githubusercontent.com/nextcloud/vm/master/lets-encrypt/activate-tls.sh | bash
 
 EOF
 
